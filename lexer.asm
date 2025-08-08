@@ -118,6 +118,8 @@ mlp:		mov rax, qword [crx]	; rax = address of first line's byte
 			jz final				; all lines handled
 			cmp r9b, 10				; if r9b == '\n'
 			je emptln				; file is empty (for POSIX ide)
+			cmp r9b, 0x3d			; if first byte == '='
+			je fnferr
 			mov rsi, rax			; src = file
 			mov rdi, buf			; dest = buf
 			xor rcx, rcx			; rcx aka symbol-counter = 0

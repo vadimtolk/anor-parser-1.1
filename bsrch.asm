@@ -10,7 +10,9 @@ bsrch:	mov rsi, qword [rsp + 8]; rsi = drname's 1st byte's address
 		mov r9,  qword [rsp + 24]	; last-index (last byte)
 		xor r10, r10			; move-index in hashs
 
-lp:		mov rax, r9				;------------------------------------------ 
+lp:		cmp r9, r8				; r9 < r8 ?
+		jl fail					; if it's right --> fail
+		mov rax, r9				;------------------------------------------ 
 		add rax, r8				; rax = (last + end) / 2 [without resude] |
 		shr rax, 1				;------------------------------------------
 		mov r10, rax			; save index
@@ -19,10 +21,10 @@ lp:		mov rax, r9				;------------------------------------------
 		add rsi, rax			; 'move' rsi to middle-hash
 		repe cmpsb				; compare it
 		je equ					; if after comparement ZF == 0 => hashs are equal
-		lahf					; load flags to AH (save state)
-		cmp r9, r8				; set flags as result of compatement of curr/last indexes 
-		jle fail				; if after "repe cmpsb" r9 <= r8 --> last unchecked hash not equal inputed hash
-		sahf					; set flags again to know current <>=? inputed
+		lahf					; load flags
+		cmp r9, r8				; r9 == r8 ?
+		je fail					; if it's right (after comparement of last element) fail
+		sahf					; set flags 
 		ja srcabv				; if someone rsi's byte > rdi's byte crope from right side 
 
 		; else crope from left side
