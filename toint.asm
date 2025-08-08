@@ -1,6 +1,7 @@
 global toint
 
 extern bsrch
+extern throw
 
 section .rodata
 nums db "0123456789"
@@ -30,7 +31,9 @@ ilp:		push rbx					; <--|
 			push qword 1				; <--|--- args to bsrch
 			push nums					; <--|
 			call bsrch
-a3:			mov r9, qword [rsp + 32]	; ret r9	
+a3:			test rax, rax				; if rax == -1
+			js numerr					; err
+			mov r9, qword [rsp + 32]	; ret r9	
 			mul r9						; rax * r9
 			mov r8, qword [rsp + 40]	; ret r8
 			add r8, rax					; r8 += rax
@@ -44,4 +47,9 @@ ov:			mov qword [lsp], rsp		; lsp = rsp
 			mov rsp, qword [csp]		; rsp = csp
 			mov rax, r8					; rax = result
 			mov rdi, qword [lsp]		; rdi = lsp
+			ret
+
+numerr:		mov qword [lsp], rsp
+			mov rsp, qword [csp]
+			mov rax, -1 				; return value = -1
 			ret

@@ -43,6 +43,8 @@ spcerr_ db "Syntax error : '=' expected", 10
 spcelen equ $-spcerr_
 cperr_ db "Syntax error : ';' expected", 10
 cpelen equ $-cperr_
+numerr_ db "Syntax error : digits 0 - 9 expected", 10
+numelen equ $-numerr_
 
 ; mmap & ftruncate size (4kb)
 sz dw 4096
@@ -138,6 +140,7 @@ stflg:		dec byte [flg]			; --flg (if flg becomes less than 0 --> err)
 fncalls:	mov qword [llen], rcx	; line-length = rcx
 			inc qword [llen]		; inc it (yet '\n')
 			add qword [ttl], rcx	; total len += rcx
+			inc qword [ttl]			; like 139
 			mov r10b, byte [flg]	; r10b = flg
 			test r10, r10			; if flg != 0 
 			jnz spcerr				; err
@@ -165,6 +168,8 @@ fncalls:	mov qword [llen], rcx	; line-length = rcx
 			pop rdi					; 
 			mov rsi, buf			; src = buf
 			call toint				; cast string-value to integer (result returned to rax)
+			test rax, rax			; if rax == -1
+			js numerr				; incorrect input
 			mov r15, qword [crp]	; return state
 			mov qword [r15], rax	; current cell = value
 			mov rax, qword [crx]	; rax = start of line
@@ -196,7 +201,6 @@ cllp:		cmp rsp, qword [fsp]	; while rsp != fsp
 rtrn:		mov rax, 77				; truncate to total len
 			movzx rdi, byte [descr]	
 			mov rsi, qword [ttl]
-			inc rsi
 			syscall
 			mov rax, 11				; munmap
 			mov rdi, qword [sfp]
@@ -278,6 +282,15 @@ cperr:		mov rdi, 8
 			mov rsi, cperr_
 			mov rdx, cpelen
 			mov r10, descr
+			mov r8, sfp
+			mov r9, sz
+			mov rcx, qword [sfp]
+			call throw
+
+numerr:		mov rdi, 9
+			mov rsi, numerr_
+			mov rdx, numelen
+			mov r10, descr 
 			mov r8, sfp
 			mov r9, sz
 			mov rcx, qword [sfp]
